@@ -383,8 +383,6 @@ body::after {
   z-index: 300;
   overflow-y: auto;
   overflow-x: hidden;
-  flex-direction: column;
-  display: flex;
 }
 .emp-view.active { transform: translateX(0); }
 /* Leaderboard always visible — welcome-state never hidden */

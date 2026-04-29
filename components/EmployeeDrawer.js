@@ -78,9 +78,7 @@ export default function EmployeeDrawer({
         />
       )}
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <CalendarGrid emp={emp} scoreMap={scoreMap} />
-      </div>
+      <CalendarGrid emp={emp} scoreMap={scoreMap} />
 
       <ScoreLog 
         emp={emp} 
