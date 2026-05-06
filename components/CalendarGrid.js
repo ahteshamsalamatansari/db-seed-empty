@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { getScoreClass } from '../lib/helpers';
+import { getScoreClass, getScoreLabel } from '../lib/helpers';
 import { MONTHS, DAYS } from '../lib/constants';
 
 export default function CalendarGrid({ emp, scoreMap }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [filter, setFilter] = useState('all');
+  const [selectedDay, setSelectedDay] = useState(null); // { dateStr, day, entry }
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -17,6 +18,22 @@ export default function CalendarGrid({ emp, scoreMap }) {
 
   const prevMonth = () => setCurrentMonth(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentMonth(new Date(year, month + 1, 1));
+
+  const handleDayClick = (dateStr, day, entry) => {
+    if (entry) {
+      setSelectedDay({ dateStr, day, entry });
+    }
+  };
+
+  const closeModal = () => setSelectedDay(null);
+
+  const getScoreColor = (score) => {
+    if (score >= 1) return 'var(--p1)';
+    if (score > 0) return 'var(--p05)';
+    if (score === 0) return 'var(--zero)';
+    if (score > -1) return 'var(--n05)';
+    return 'var(--n1)';
+  };
 
   const cells = [];
   
@@ -52,13 +69,20 @@ export default function CalendarGrid({ emp, scoreMap }) {
     }
 
     cells.push(
-      <div key={d} className={cls} onClick={() => { /* Modal could go here */ }}>
+      <div key={d} className={cls} onClick={() => handleDayClick(dateStr, d, entry)}>
         {entry && <div className="day-bg"></div>}
         <div className="day-num">{d}</div>
         {entry && <div className="day-score">{scoreText}</div>}
       </div>
     );
   }
+
+  const formatDisplayDate = (dateStr) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', {
+      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+    });
+  };
 
   return (
     <div className="calendar-section">
@@ -79,6 +103,63 @@ export default function CalendarGrid({ emp, scoreMap }) {
       <div className="cal-grid">
         {DAYS.map(d => <div key={d} className="cal-day-header">{d}</div>)}
         {cells}
+      </div>
+
+      {/* Score Detail Popup Modal */}
+      <div className={`modal-overlay ${selectedDay ? 'open' : ''}`} onClick={closeModal}>
+        <div className="modal" onClick={(e) => e.stopPropagation()}>
+          {selectedDay && (
+            <>
+              <div className="modal-title">
+                📋 Score Details — {emp?.name || 'Member'}
+              </div>
+              <div className="modal-date">
+                {formatDisplayDate(selectedDay.dateStr)}
+              </div>
+              <div className="modal-detail">
+                <div 
+                  className="modal-score-display" 
+                  style={{ color: getScoreColor(selectedDay.entry.score) }}
+                >
+                  {selectedDay.entry.score > 0 ? '+' : ''}{selectedDay.entry.score}
+                </div>
+                <div style={{
+                  textAlign: 'center',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: getScoreColor(selectedDay.entry.score),
+                  marginBottom: '12px',
+                  opacity: 0.85
+                }}>
+                  {getScoreLabel(selectedDay.entry.score)}
+                </div>
+                <div style={{
+                  height: '1px',
+                  background: 'var(--border)',
+                  margin: '8px 0 12px'
+                }}></div>
+                <div style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '9px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text3)',
+                  marginBottom: '6px'
+                }}>
+                  REASON / EVIDENCE
+                </div>
+                <div className="modal-reason-text" style={{ textAlign: 'left' }}>
+                  {selectedDay.entry.reason || 'No reason provided'}
+                </div>
+              </div>
+              <button className="modal-close" onClick={closeModal}>
+                CLOSE
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
